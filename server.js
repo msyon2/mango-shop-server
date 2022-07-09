@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const port = 8080;
+const models = require("./models");
 
 app.use(express.json());
 app.use(cors());
@@ -53,4 +54,17 @@ app.post("/products", function (req, res) {
 //세팅한 app을 실행한다
 app.listen(port, () => {
   console.log("mango-shop server 실행중");
+  //database sync function
+  models.sequelize
+    //.sync()안에 작성한 내용를 DB와 sync
+    .sync()
+    .then(() => {
+      console.log("DB 연결 성공");
+    })
+    .catch((err) => {
+      console.log("DB 연결 실패");
+      console.error(err);
+      //error발생시 sever process 종료
+      process.exit();
+    });
 });

@@ -7,48 +7,66 @@ const models = require("./models");
 app.use(express.json());
 app.use(cors());
 
-app.get("/products/:id/events/:eventId", function (req, res) {
+app.get("/products/:id", function (req, res) {
   const params = req.params;
-  const { id, eventId } = params; // destructuring expression; same as const id = params.id
-  res.send(`id는 ${id}와 ${eventId}입니다`);
+  const { id } = params; // destructuring expression; same as const id = params.id
+  //individual product search : findOne
+  models.Product.findOne({
+    where: {
+      id, //id:id,
+    },
+  })
+    .then((result) => {
+      res.send({ product: result });
+    })
+    .catch((err) => {
+      console.error(err);
+      res.send("상품조회시 에러가 발생했습니다");
+    });
 });
 
 app.get("/products", function (req, res) {
-  const query = req.query;
-  console.log("Query", query);
-  res.send({
-    products: [
-      {
-        id: 1,
-        name: "습식사료",
-        price: 10000,
-        seller: "내추럴코어",
-        imgUrl: "images/products/food1.jpg",
-      },
-      {
-        id: 2,
-        name: "하네스",
-        price: 50000,
-        seller: "도기멍",
-        imgUrl: "images/products/acc1.jpg",
-      },
-      {
-        id: 3,
-        name: "배변패드",
-        price: 30000,
-        seller: "흡수혁명",
-        imagUrl: "images/products/house1.jpg",
-      },
-    ],
-  });
+  models.Product.findAll({
+    /* limit: 1, */ //limit of no. of products to be searched
+    order: [["createdAt", "DESC"]],
+    attributes: ["id", "name", "price", "seller", "imgUrl", "createdAt"],
+  })
+    .then((result) => {
+      res.send({
+        product: result,
+      });
+    })
+    .catch((err) => {
+      console.error(err);
+      res.send("error 발생");
+    });
 });
 
 app.post("/products", function (req, res) {
   const body = req.body;
-  res.send({
-    /* body:body */
-    body,
-  });
+  //1. 디스트럭처링으로 상수 body 의 값을 개별적으로 assign
+  const { name, description, price, seller } = body;
+  if (!name || !description || !price || !seller) {
+    res.send("모든 필드를 입력해주세요");
+  }
+  //2. creating record: Product table
+  models.Product.create({
+    name,
+    description,
+    price,
+    seller,
+  })
+    .then((result) => {
+      console.log("상품생성결과:", result);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.send("상품업로드에 문제가 발생했습니다");
+    });
+  //res.send({
+  /* body:body */
+  //body,
+  //});
 });
 
 //세팅한 app을 실행한다
@@ -64,7 +82,7 @@ app.listen(port, () => {
     .catch((err) => {
       console.log("DB 연결 실패");
       console.error(err);
-      //error발생시 sever process 종료
+      //error발생시 terminate sever process
       process.exit();
     });
 });

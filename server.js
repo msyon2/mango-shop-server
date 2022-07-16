@@ -3,6 +3,7 @@ const cors = require("cors");
 const app = express();
 const models = require("./models");
 const multer = require("multer");
+const { restart } = require("nodemon");
 const upload = multer({
   storage: multer.diskStorage({
     destination: function (req, file, cb) {
@@ -82,6 +83,19 @@ app.post("/image", upload.single("image"), (req, res) => {
   });
 });
 
+app.get("/banners", (req, res) => {
+  models.Banner.findAll({
+    limit: 2,
+  })
+    .then((result) => {
+      res.send({
+        banners: result,
+      });
+    })
+    .catch((error) => {
+      res.status(500).send("에러가 발생했습니다.", error);
+    });
+});
 app.listen(port, () => {
   console.log("망고샵 서버 실행중");
   models.sequelize
